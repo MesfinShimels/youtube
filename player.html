@@ -29,17 +29,16 @@
       fetch(`https://yewtu.be/api/v1/videos/${vid}`)
         .then(r => r.json())
         .then(data => {
-          const fmts = [...(data.adaptiveFormats || []), ...(data.formats || [])];
-          const mp4 = fmts.find(f => f.mimeType.startsWith('video/mp4') && f.url);
+          const fmts = [...(data.adaptiveFormats||[]), ...(data.formats||[])];
+          const mp4 = fmts.find(f=>f.mimeType.startsWith('video/mp4')&&f.url);
           if (mp4) {
             document.getElementById('player').src = mp4.url;
           } else {
             document.body.innerHTML = '<p style="color:#fff;">Stream URL not found.</p>';
           }
         })
-        .catch(err => {
+        .catch(() => {
           document.body.innerHTML = '<p style="color:#fff;">Error loading video.</p>';
-          console.error(err);
         });
     }
   </script>
