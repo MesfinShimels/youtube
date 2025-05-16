@@ -1,0 +1,47 @@
+<!-- ─────────── player.html ─────────── -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>YouTube In‑App Player</title>
+  <style>
+    body, html {
+      margin: 0; padding: 0;
+      height: 100%; background: #000;
+      display: flex; justify-content: center; align-items: center;
+    }
+    video {
+      width: 100%; height: auto; max-height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <video id="player" controls autoplay>
+    Your browser does not support the video tag.
+  </video>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const vid = params.get('vid');
+    if (!vid) {
+      document.body.innerHTML = '<p style="color:#fff;">No video ID provided.</p>';
+    } else {
+      fetch(`https://yewtu.be/api/v1/videos/${vid}`)
+        .then(r => r.json())
+        .then(data => {
+          const fmts = [...(data.adaptiveFormats || []), ...(data.formats || [])];
+          const mp4 = fmts.find(f => f.mimeType.startsWith('video/mp4') && f.url);
+          if (mp4) {
+            document.getElementById('player').src = mp4.url;
+          } else {
+            document.body.innerHTML = '<p style="color:#fff;">Stream URL not found.</p>';
+          }
+        })
+        .catch(err => {
+          document.body.innerHTML = '<p style="color:#fff;">Error loading video.</p>';
+          console.error(err);
+        });
+    }
+  </script>
+</body>
+</html>

@@ -16,7 +16,7 @@ TELEGRAM_TOKEN  = '7510483125:AAFgMF6ysMYbrT-_KxmIZKYJAPFBRIa7y8s'
 YOUTUBE_API_KEY = 'AIzaSyAoIj0fgWquennVrhArFkzGUHtvwHHjDIc'
 
 # URL where player.html is hosted via GitHub Pages
-WEBAPP_BASE_URL = 'https://MesfinShimels.github.io/Rossmann_Sales_Predictor/player.html'
+WEBAPP_BASE_URL = 'https://github.com/MesfinShimels/youtube/blob/main/player.html'
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
