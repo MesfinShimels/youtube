@@ -1,46 +1,102 @@
-<!-- ─────────── player.html ─────────── -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>YouTube In‑App Player</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YouTube‑style In‑App Player</title>
   <style>
-    body, html {
+    /* Full‑screen, black background, no scrollbars */
+    html, body {
       margin: 0; padding: 0;
-      height: 100%; background: #000;
-      display: flex; justify-content: center; align-items: center;
+      width: 100vw; height: 100vh;
+      background: #000;
+      overflow: hidden;
     }
-    video {
-      width: 100%; height: auto; max-height: 100%;
+    /* The video takes up the full area, preserves aspect ratio */
+    video#player {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: contain;
+      background: #000;
     }
+    /* A simple loading spinner centered on screen */
+    .spinner {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border: 8px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      width: 60px; height: 60px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    /* Hide the spinner once video starts */
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <video id="player" controls autoplay>
+  <!-- Loading Spinner -->
+  <div id="spinner" class="spinner"></div>
+
+  <!-- Fullscreen Video -->
+  <video
+    id="player"
+    controls
+    autoplay
+    playsinline
+    poster=""
+  >
     Your browser does not support the video tag.
   </video>
+
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const vid = params.get('vid');
-    if (!vid) {
-      document.body.innerHTML = '<p style="color:#fff;">No video ID provided.</p>';
-    } else {
-      fetch(`https://yewtu.be/api/v1/videos/${vid}`)
-        .then(r => r.json())
-        .then(data => {
-          const fmts = [...(data.adaptiveFormats||[]), ...(data.formats||[])];
-          const mp4 = fmts.find(f=>f.mimeType.startsWith('video/mp4')&&f.url);
-          if (mp4) {
-            document.getElementById('player').src = mp4.url;
-          } else {
-            document.body.innerHTML = '<p style="color:#fff;">Stream URL not found.</p>';
-          }
-        })
-        .catch(() => {
-          document.body.innerHTML = '<p style="color:#fff;">Error loading video.</p>';
-        });
-    }
+    (async () => {
+      const params = new URLSearchParams(window.location.search);
+      const vid    = params.get('vid');
+      if (!vid) {
+        document.body.innerHTML =
+          '<p style="color:#fff;text-align:center;padding-top:50vh;">No video ID provided.</p>';
+        return;
+      }
+
+      try {
+        // Fetch stream info from your Invidious‐style proxy
+        const res  = await fetch(`https://media.yourcompany.com/api/v1/videos/${vid}`);
+        const data = await res.json();
+
+        // Merge formats and adaptiveFormats
+        const fmts = [...(data.adaptiveFormats||[]), ...(data.formats||[])];
+
+        // Pick the first MP4 available
+        const mp4 = fmts.find(f =>
+          f.mimeType.startsWith('video/mp4') && f.url
+        );
+
+        if (!mp4) throw new Error('No MP4 stream found');
+
+        const player  = document.getElementById('player');
+        const spinner = document.getElementById('spinner');
+
+        // Set source & poster (thumbnail) before loading
+        player.src    = mp4.url;
+        player.poster = data.videoDetails.thumbnails.pop().url;
+
+        // When enough data is buffered, hide spinner
+        player.addEventListener('canplay', () => {
+          spinner.classList.add('hidden');
+          player.play();
+        }, { once: true });
+
+      } catch (err) {
+        console.error(err);
+        document.body.innerHTML =
+          '<p style="color:#fff;text-align:center;padding:1em;">Error loading video.</p>';
+      }
+    })();
   </script>
 </body>
 </html>
